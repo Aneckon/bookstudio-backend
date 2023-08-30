@@ -4,16 +4,24 @@ const pool = require('../db');
 
 const register = async (req, res) => {
   try {
-    const { username, password } = req.body;
+    const { email, username, password } = req.body;
+
+    const existingUser = await pool.oneOrNone(
+      'SELECT * FROM users WHERE username = $1 OR email = $2',
+      [username, email],
+    );
+    if (existingUser) {
+      return res.status(409).json({ error: 'User already exists' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    const query = 'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id';
-    const values = [username, hashedPassword];
-    console.log(process.env.POSTGRES_DATABASE);
+    const query =
+      'INSERT INTO users (email, username, password) VALUES ($1, $2, $3) RETURNING users';
+    const values = [email, username, hashedPassword];
     const result = await pool.query(query, values);
-    const userId = result.rows[0].id;
+    const userId = jwt.sign({ user: result[0] }, 'your-secret-key');
     res.json({ userId });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
@@ -21,6 +29,7 @@ const register = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { username, password } = req.body;
+
     const query = 'SELECT * FROM users WHERE username = $1';
     const result = await pool.query(query, [username]);
 
