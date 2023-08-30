@@ -4,10 +4,11 @@ const pool = require('../db');
 
 const register = async (req, res) => {
   try {
-    const { email, username, password } = req.body;
+    const { username, password } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
     const query = 'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id';
-    const values = [email, username, hashedPassword];
+    const values = [username, hashedPassword];
+    console.log(process.env.POSTGRES_DATABASE);
     const result = await pool.query(query, values);
     const userId = result.rows[0].id;
     res.json({ userId });
