@@ -1,6 +1,9 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
+const crypto = require('crypto');
+
+const secretKey = crypto.randomBytes(64).toString('hex');
 
 const register = async (req, res) => {
   try {
@@ -19,11 +22,34 @@ const register = async (req, res) => {
       'INSERT INTO users (email, username, password) VALUES ($1, $2, $3) RETURNING users';
     const values = [email, username, hashedPassword];
     const result = await pool.query(query, values);
-    const userId = jwt.sign({ user: result[0] }, 'your-secret-key');
+    const userId = jwt.sign(result[0], secretKey);
     res.json({ userId });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
   }
+};
+
+const protected = (req, res, next) => {
+  const token = req.headers.authorization.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  // const userId = jwt.verify(token, secretKey, function (err, decoded) {
+  //   console.log(err);
+  //   if (err) {
+  //     return null;
+  //   }
+
+  //   return decoded.userId;
+  // });
+
+  // if (!userId) {
+  //   return res.status(401).json({ error: 'Unauthorized' });
+  // }
+
+  next();
 };
 
 const login = async (req, res) => {
@@ -44,7 +70,7 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    const token = jwt.sign({ userId: user.id }, 'your-secret-key');
+    const token = jwt.sign({ userId: user.id }, secretKey);
     res.json({ token });
   } catch (error) {
     res.status(500).json({ error: 'Internal Server Error' });
@@ -54,4 +80,5 @@ const login = async (req, res) => {
 module.exports = {
   register,
   login,
+  protected,
 };

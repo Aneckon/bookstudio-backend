@@ -6,6 +6,9 @@ const pool = require('../db');
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.get('/protected', authController.protected, (req, res) => {
+  res.json({ message: 'Access granted' });
+});
 router.post('/request-reset', passwordResetController.requestReset);
 router.get('/users', async (req, res) => {
   try {

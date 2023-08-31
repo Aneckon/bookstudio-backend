@@ -1,6 +1,9 @@
 const pool = require('../db');
 const nodemailer = require('nodemailer');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+
+const secretKey = crypto.randomBytes(64).toString('hex');
 
 const transporter = nodemailer.createTransport({
   service: 'your-email-service-provider',
@@ -37,7 +40,7 @@ const getUserByEmail = async (email) => {
 };
 
 const generateResetToken = (userId) => {
-  return jwt.sign({ userId }, 'your-secret-key', { expiresIn: '1h' });
+  return jwt.sign({ userId }, 'fdgsfghgdjfgkjghkhklkj', { expiresIn: '1h' });
 };
 
 const sendResetEmail = (email, resetLink) => {
